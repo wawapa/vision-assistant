@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>視覺語音助理</title>
     <style>
-        /* 高對比與無障礙樣式設定 */
+        /* 全域字體與 UI 放大 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -16,21 +16,21 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            font-size: 18px;
+            font-size: 22px; /* 放大基礎字體 */
         }
         
         /* 增強鍵盤操作的視覺焦點 */
         *:focus {
-            outline: 6px solid #ffbf00 !important;
-            outline-offset: 4px;
+            outline: 8px solid #ffbf00 !important; /* 加粗焦點外框 */
+            outline-offset: 6px;
         }
 
-        h1 { margin-bottom: 15px; color: #4fc3f7; font-size: 1.8rem; text-align: center; }
+        h1 { margin-bottom: 20px; color: #4fc3f7; font-size: 2.2rem; text-align: center; }
         
         main {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
             max-width: 800px;
             width: 100%;
         }
@@ -38,37 +38,52 @@
         .card {
             background: #1e1e1e;
             border: 2px solid #333;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 25px;
             width: 100%;
         }
 
-        /* 影片預覽區域 */
+        /* 影片預覽區域：不放大，維持適當比例 */
         video {
             width: 100%;
-            max-height: 200px;
+            max-height: 250px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 12px;
             background: #000;
-            border: 2px solid #4fc3f7;
+            border: 3px solid #4fc3f7;
             margin-bottom: 15px;
+        }
+
+        /* 切換鏡頭按鈕 */
+        #switchCameraBtn {
+            background: #0288d1;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 25px 20px;
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         /* 超大主按鈕設計，方便盲按 */
         #mainActionBtn {
-            background: #ffeb3b; /* 高對比亮黃色 */
+            background: #ffeb3b;
             color: #000000;
-            font-size: 2.5rem;
+            font-size: 2.8rem; /* 放大字體 */
             font-weight: 900;
-            padding: 40px 20px;
-            min-height: 200px; /* 極大高度 */
+            padding: 50px 20px; /* 加大上下留白 */
+            min-height: 220px;
             width: 100%;
-            border: 6px solid #f57f17;
-            border-radius: 16px;
+            border: 8px solid #f57f17;
+            border-radius: 20px;
             cursor: pointer;
             transition: transform 0.1s;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-            margin: 10px 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            margin: 15px 0;
         }
         
         #mainActionBtn:active {
@@ -83,14 +98,15 @@
             cursor: not-allowed; 
         }
 
+        /* 語音控制按鈕放大 */
         .audio-controls { display: flex; gap: 15px; margin-top: 15px; }
         .audio-controls button { 
             flex: 1; 
-            padding: 20px; 
-            font-size: 1.3rem; 
+            padding: 25px; 
+            font-size: 1.5rem; 
             font-weight: bold;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
         }
         #speakBtn { background: #81c784; color: #000; }
@@ -99,29 +115,29 @@
 
         label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             font-weight: bold;
             color: #ffb74d;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
         }
 
         input[type="password"] {
             width: 100%;
-            padding: 16px;
-            border: 2px solid #666;
-            border-radius: 8px;
+            padding: 20px;
+            border: 3px solid #666;
+            border-radius: 12px;
             background: #2c2c2c;
             color: #fff;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
         }
 
         #status {
             margin-top: 10px;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
         }
 
@@ -131,14 +147,14 @@
 
         #response {
             margin-top: 15px;
-            min-height: 120px;
-            padding: 20px;
+            min-height: 150px;
+            padding: 25px;
             background: #2c2c2c;
-            border-radius: 8px;
+            border-radius: 12px;
             white-space: pre-wrap;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             line-height: 1.6;
-            border: 2px solid #555;
+            border: 3px solid #555;
         }
 
         .sr-only {
@@ -155,9 +171,9 @@
         
         .api-link {
             color: #4fc3f7;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             display: block;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             padding: 10px 0;
         }
     </style>
@@ -166,24 +182,18 @@
     <main>
         <h1>視覺語音助理</h1>
 
-        <!-- API 金鑰設定區 -->
-        <section class="card" aria-labelledby="settings-heading">
-            <h2 id="settings-heading" class="sr-only">系統設定</h2>
-            <a href="https://aistudio.google.com/api-keys" target="_blank" class="api-link" aria-label="取得 API 金鑰，將開啟新分頁" id="apiLink">取得 Gemini API 金鑰 (另開分頁)</a>   
-            <label for="apiKey">API 金鑰：</label>
-            <input type="password" id="apiKey" placeholder="請輸入您的金鑰" aria-required="true">
-        </section>
-
-        <!-- 主要操作區 -->
+        <!-- 主要操作區 (移至最上方，方便視障者直接觸及) -->
         <section class="card" aria-labelledby="camera-heading">
             <h2 id="camera-heading" class="sr-only">相機與辨識操作區</h2>
             
             <video id="video" autoplay playsinline aria-hidden="true"></video>
             <canvas id="canvas" style="display:none;" aria-hidden="true"></canvas>
             
+            <button id="switchCameraBtn" aria-label="切換前後鏡頭">🔄 切換前/後鏡頭</button>
+            
             <div id="status" role="status" aria-live="polite">相機啟動中...</div>
 
-            <!-- 合併後的超大按鈕 -->
+            <!-- 超大按鈕 -->
             <button id="mainActionBtn" aria-label="拍下眼前畫面並開始語音辨識">拍照並辨識</button>
 
             <div class="audio-controls">
@@ -195,11 +205,21 @@
                 結果將顯示在此。
             </div>
         </section>
+
+        <!-- API 金鑰設定區 (移至最下方) -->
+        <section class="card" aria-labelledby="settings-heading">
+            <h2 id="settings-heading" class="sr-only">系統設定區塊，位於網頁最底端</h2>
+            <p style="margin-bottom: 15px; color: #aaa; font-size: 1.1rem;">以下設定建議請明眼人協助完成</p>
+            <a href="https://aistudio.google.com/api-keys" target="_blank" class="api-link" aria-label="取得 API 金鑰，將開啟新分頁" id="apiLink">取得 Gemini API 金鑰 (另開分頁)</a>   
+            <label for="apiKey">API 金鑰：</label>
+            <input type="password" id="apiKey" placeholder="請在此貼上金鑰" aria-required="true">
+        </section>
     </main>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
         const mainActionBtn = document.getElementById('mainActionBtn');
         const speakBtn = document.getElementById('speakBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -210,9 +230,11 @@
 
         let lastResponse = '';
         let apiKey = '';
-        const modelName = 'gemini-2.5-flash';
+        let currentFacingMode = 'environment'; // 預設後置鏡頭
+        let videoStream = null;
+        let apiReminderInterval = null; // 記錄重複提醒的定時器
         
-        // 固定的內部提示詞
+        const modelName = 'gemini-2.5-flash';
         const SYSTEM_PROMPT = "我是視覺障礙者，幫我辨識這張圖片有什麼? 請直接用繁體中文描述畫面內容，語氣自然且具體，並保持簡短（三句話以內），不要加入任何Markdown語法（如星號）或多餘的問候語。";
 
         // --- 語音功能 ---
@@ -224,10 +246,21 @@
             window.speechSynthesis.speak(utterance);
         }
 
+        // 停止重複的 API 提醒
+        function stopApiReminder() {
+            if (apiReminderInterval) {
+                clearInterval(apiReminderInterval);
+                apiReminderInterval = null;
+            }
+        }
+
         // --- 互動語音提示 (焦點與點擊) ---
-        // 為了讓盲人知道自己目前滑到哪裡，當元素獲得焦點(Focus)時給予語音提示
-        apiLink.addEventListener('focus', () => speak('取得API金鑰連結，點擊將開啟新分頁'));
-        apiKeyInput.addEventListener('focus', () => speak('密碼輸入框，請輸入 API 金鑰'));
+        apiLink.addEventListener('focus', () => speak('取得API金鑰連結，位於網頁最底部'));
+        apiKeyInput.addEventListener('focus', () => {
+            stopApiReminder(); // 當使用者開始輸入時，停止干擾
+            speak('密碼輸入框，請貼上 API 金鑰');
+        });
+        switchCameraBtn.addEventListener('focus', () => speak('切換鏡頭按鈕'));
         mainActionBtn.addEventListener('focus', () => speak('拍照並辨識，主要按鈕'));
         speakBtn.addEventListener('focus', () => speak('重聽結果按鈕'));
         stopBtn.addEventListener('focus', () => speak('停止朗讀按鈕'));
@@ -235,8 +268,9 @@
         // 停止語音
         stopBtn.addEventListener('click', () => {
             window.speechSynthesis.cancel();
+            stopApiReminder();
             speak('已停止朗讀', true);
-            updateStatus('已停止朗讀', 'success');
+            updateStatus('已停止', 'success');
         });
 
         // 重聽結果
@@ -254,32 +288,66 @@
             status.className = type;
         }
 
-        async function initWebcam() {
+        // --- 相機初始化與切換邏輯 ---
+        async function initWebcam(facingMode) {
+            // 如果已有舊的串流，先停止它
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: facingMode } 
                 });
-                video.srcObject = stream;
-                updateStatus('相機就緒，可以隨時拍照。', 'success');
+                video.srcObject = videoStream;
+                
+                const modeText = facingMode === 'user' ? '前置自拍' : '後置主';
+                updateStatus(`相機就緒 (${modeText}鏡頭)`, 'success');
+                
                 // 延遲一點點說，避免網頁剛載入時語音被截斷
-                setTimeout(() => speak('系統已準備就緒，請觸摸畫面中間的超大按鈕進行拍照辨識。', true), 1000);
+                setTimeout(() => speak(`已開啟${modeText}鏡頭。可以點擊下方大按鈕進行拍照。`, true), 800);
             } catch (err) {
                 updateStatus('無法存取相機', 'error');
-                speak('相機啟動失敗，請檢查權限設定', true);
+                speak('相機啟動失敗，請檢查瀏覽器權限設定', true);
             }
         }
 
+        // 切換鏡頭按鈕事件
+        switchCameraBtn.addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            speak('正在切換鏡頭，請稍候', true);
+            initWebcam(currentFacingMode);
+        });
+
         apiKeyInput.addEventListener('input', (e) => {
             apiKey = e.target.value.trim();
+            if (apiKey) stopApiReminder(); // 偵測到有輸入就停止提醒
         });
 
         // --- 核心功能：合併拍照與辨識 ---
         mainActionBtn.addEventListener('click', async () => {
+            // 如果沒有 API 金鑰的處理邏輯
             if (!apiKey) {
-                speak('請先在畫面上方輸入 API 金鑰', true);
-                apiKeyInput.focus();
+                const errorMsg = '系統錯誤，尚未設定 API 金鑰。請將手機交給明眼人協助，滑到網頁最下方，貼上 Gemini API 金鑰後即可開始使用。';
+                speak(errorMsg, true);
+                
+                stopApiReminder(); // 先清除可能存在的舊定時器
+                
+                // 設定每 15 秒重複廣播一次
+                apiReminderInterval = setInterval(() => {
+                    if (!apiKey) {
+                        speak('提醒您：系統缺少 API 金鑰。請尋求明眼人協助，滑到網頁最下方進行設定。', false);
+                    } else {
+                        stopApiReminder();
+                    }
+                }, 15000);
+
+                // 嘗試將焦點移到底部，若有明眼人在看可以直接看到
+                apiKeyInput.scrollIntoView({ behavior: 'smooth' });
                 return;
             }
+            
+            stopApiReminder(); // 確保開始拍照時關閉提醒
             
             // 1. 給予即時語音回饋，並鎖定按鈕
             speak('喀擦！已拍照，正在為您分析畫面，請稍候。', true);
@@ -291,6 +359,7 @@
             // 2. 擷取畫面
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            // 如果是前鏡頭，可能會需要水平翻轉，但送給 AI 辨識其實不影響，因此這裡照舊擷取
             canvas.getContext('2d').drawImage(video, 0, 0);
             const capturedImage = canvas.toDataURL('image/jpeg', 0.85);
             const base64Data = capturedImage.split(',')[1];
@@ -333,7 +402,7 @@
                 speak('分析完成，結果是：', true);
                 speak(lastResponse);
                 
-                // 將焦點移至結果區，讓螢幕閱讀器能抓到
+                // 將焦點移至結果區
                 responseDiv.focus();
 
             } catch (err) {
@@ -345,8 +414,8 @@
             }
         });
 
-        // 初始化
-        initWebcam();
+        // 網頁載入後初始化後置鏡頭
+        initWebcam('environment');
     </script>
 </body>
 </html>
