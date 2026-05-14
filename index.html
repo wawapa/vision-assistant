@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>視覺助理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          spacing: {
+            safe: "max(1rem, env(safe-area-inset-bottom))",
+            "safe-top": "max(0px, env(safe-area-inset-top))",
+            "safe-left": "max(0px, env(safe-area-inset-left))",
+            "safe-right": "max(0px, env(safe-area-inset-right))",
+          },
+          fontFamily: {
+            sans: ["ui-sans-serif", "system-ui", "Segoe UI", "Noto Sans TC", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="min-h-dvh bg-zinc-950 pb-safe pt-safe-top pl-safe-left pr-safe-right font-sans text-zinc-100 antialiased">
+  <a
+    href="#main"
+    class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-teal-400 focus:px-4 focus:py-3 focus:text-base focus:font-semibold focus:text-zinc-950 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-teal-300"
+  >跳到主要內容</a>
+
+  <header class="border-b border-zinc-800 bg-zinc-900">
+    <div class="mx-auto max-w-5xl px-5 py-10 sm:py-12">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-400/90">Vision Assistant</p>
+      <h1 class="mt-2 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">視覺助理</h1>
+      <p class="mt-3 max-w-2xl text-base leading-relaxed text-zinc-400">
+        按「擷取並辨識」會先拍照再自動詢問 Gemini；完成後可按「朗讀」聽回覆。手機請以 HTTPS 開啟，相機才可正常使用。
+      </p>
+    </div>
+  </header>
+
+  <main id="main" class="mx-auto max-w-5xl px-4 py-8 pb-36 lg:px-5 lg:pb-10">
+    <div class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-4">
+      <section aria-labelledby="camera-heading" class="flex flex-col border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
+        <h2 id="camera-heading" class="text-xs font-bold uppercase tracking-[0.15em] text-zinc-500">相機</h2>
+        <div class="relative mt-4 aspect-video w-full overflow-hidden bg-black ring-1 ring-inset ring-zinc-800">
+          <video id="video" class="h-full w-full object-cover" playsinline webkit-playsinline muted autoplay aria-label="相機即時畫面"></video>
+          <p id="videoPlaceholder" class="absolute inset-0 flex items-center justify-center bg-zinc-950 p-4 text-center text-base text-zinc-500">
+            尚未開啟相機。請點下方「開啟相機」。
+          </p>
+        </div>
+
+        <div class="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            id="btnCamera"
+            class="min-h-12 rounded-md bg-teal-500 px-4 text-base font-semibold text-zinc-950 transition-colors hover:bg-teal-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+          >開啟相機</button>
+          <button
+            type="button"
+            id="btnStopCamera"
+            class="min-h-12 rounded-md bg-zinc-800 px-4 text-base font-semibold text-zinc-100 transition-colors hover:bg-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+          >關閉相機</button>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            id="btnCaptureAsk"
+            class="min-h-12 rounded-md bg-teal-600 px-3 text-base font-semibold text-white transition-colors hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:col-span-1"
+          >擷取並辨識</button>
+          <button
+            type="button"
+            id="btnSpeak"
+            class="min-h-12 rounded-md bg-amber-500 px-3 text-base font-semibold text-zinc-950 transition-colors hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+          >朗讀</button>
+          <button
+            type="button"
+            id="btnStopSpeak"
+            class="min-h-12 rounded-md bg-zinc-800 px-3 text-base font-semibold text-zinc-200 transition-colors hover:bg-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+          >停止朗讀</button>
+        </div>
+        <p id="status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+        <p id="statusAssertive" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
+      </section>
+
+      <section aria-labelledby="settings-heading" class="flex flex-col gap-5 border border-zinc-800 bg-zinc-900/80 p-5 sm:p-6">
+        <h2 id="settings-heading" class="text-xs font-bold uppercase tracking-[0.15em] text-zinc-500">設定與問題</h2>
+
+        <div>
+          <label for="apiKey" class="mb-1.5 block text-sm font-semibold text-zinc-300">Gemini API 金鑰</label>
+          <input
+            id="apiKey"
+            type="password"
+            autocomplete="off"
+            class="mt-0 w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100 placeholder:text-zinc-500 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/60"
+            placeholder="貼上 API Key"
+          />
+          <p id="apiKeyHint" class="mt-2 text-sm leading-relaxed text-zinc-500">
+            金鑰僅在您的瀏覽器使用；勿在公開網站部署此頁。勾選「記住金鑰」會存於本機儲存空間，有外洩風險。
+          </p>
+          <label class="mt-3 flex cursor-pointer items-center gap-3 text-base font-medium text-zinc-300">
+            <input id="rememberKey" type="checkbox" class="h-5 w-5 rounded border-zinc-600 bg-zinc-900 text-teal-500 focus:ring-2 focus:ring-teal-500" />
+            <span>記住金鑰（本機）</span>
+          </label>
+        </div>
+
+        <div>
+          <label for="modelName" class="mb-1.5 block text-sm font-semibold text-zinc-300">模型名稱</label>
+          <input
+            id="modelName"
+            type="text"
+            class="w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/60"
+            value="gemini-2.5-flash"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="min-h-0 flex-1">
+          <label for="question" class="mb-1.5 block text-sm font-semibold text-zinc-300">想問的內容（可留空使用預設描述指令）</label>
+          <textarea
+            id="question"
+            rows="4"
+            class="mt-0 w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100 placeholder:text-zinc-500 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/60"
+            placeholder="例如：請描述眼前畫面中有哪些物體與文字，並用條列、方便聽讀的方式回答。"
+          ></textarea>
+        </div>
+      </section>
+    </div>
+
+    <section aria-labelledby="reply-heading" class="mt-4 border border-zinc-800 border-l-4 border-l-teal-500 bg-zinc-900 p-5 sm:p-6">
+      <h2 id="reply-heading" class="text-xs font-bold uppercase tracking-[0.15em] text-zinc-500">模型回覆</h2>
+      <div
+        id="reply"
+        tabindex="-1"
+        class="mt-4 min-h-[10rem] rounded-md border border-zinc-800 bg-zinc-950 px-4 py-4 text-lg leading-relaxed text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+        aria-live="polite"
+      ></div>
+      <p id="errorAlert" role="alert" class="mt-4 hidden border-l-4 border-rose-500 bg-rose-950/50 px-4 py-3 text-base text-rose-100"></p>
+    </section>
+  </main>
+
+  <nav
+    class="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-800 bg-zinc-950 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+    aria-label="主要操作（行動版）"
+  >
+    <div class="mx-auto flex max-w-5xl gap-2">
+      <button
+        type="button"
+        data-mobile-mirror="btnCaptureAsk"
+        class="min-h-12 min-w-0 flex-1 rounded-md bg-teal-600 text-sm font-semibold text-white sm:text-base"
+      >擷取並辨識</button>
+      <button
+        type="button"
+        data-mobile-mirror="btnSpeak"
+        class="min-h-12 min-w-0 flex-1 rounded-md bg-amber-500 text-sm font-semibold text-zinc-950 sm:text-base"
+      >朗讀</button>
+      <button
+        type="button"
+        data-mobile-mirror="btnStopSpeak"
+        class="min-h-12 min-w-0 flex-1 rounded-md bg-zinc-800 text-sm font-semibold text-zinc-200 sm:text-base"
+      >停止</button>
+    </div>
+  </nav>
+
+  <canvas id="canvas" class="hidden" aria-hidden="true"></canvas>
+
+  <script>
+    (function () {
+      const video = document.getElementById("video");
+      const videoPlaceholder = document.getElementById("videoPlaceholder");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const statusPolite = document.getElementById("status");
+      const statusAssertive = document.getElementById("statusAssertive");
+      const replyEl = document.getElementById("reply");
+      const errorAlert = document.getElementById("errorAlert");
+      const apiKeyInput = document.getElementById("apiKey");
+      const rememberKey = document.getElementById("rememberKey");
+      const modelNameInput = document.getElementById("modelName");
+      const questionInput = document.getElementById("question");
+
+      let stream = null;
+      let lastImageBase64 = null;
+      let lastReplyText = "";
+      const LS_KEY = "visualAssistant_geminiApiKey";
+      const LS_MODEL = "visualAssistant_geminiModel";
+
+      function setPolite(msg) {
+        statusPolite.textContent = msg;
+      }
+      function setAssertive(msg) {
+        statusAssertive.textContent = msg;
+      }
+      function showError(msg) {
+        if (!msg) {
+          errorAlert.classList.add("hidden");
+          errorAlert.textContent = "";
+          return;
+        }
+        errorAlert.textContent = msg;
+        errorAlert.classList.remove("hidden");
+        setAssertive(msg);
+      }
+
+      function loadStored() {
+        try {
+          const k = localStorage.getItem(LS_KEY);
+          const m = localStorage.getItem(LS_MODEL);
+          if (k) {
+            apiKeyInput.value = k;
+            rememberKey.checked = true;
+          }
+          if (m) modelNameInput.value = m;
+        } catch (_) {}
+      }
+      function persistKey() {
+        try {
+          if (rememberKey.checked && apiKeyInput.value.trim()) {
+            localStorage.setItem(LS_KEY, apiKeyInput.value.trim());
+          } else {
+            localStorage.removeItem(LS_KEY);
+          }
+        } catch (_) {}
+      }
+      function persistModel() {
+        try {
+          localStorage.setItem(LS_MODEL, modelNameInput.value.trim() || "gemini-2.5-flash");
+        } catch (_) {}
+      }
+
+      loadStored();
+
+      rememberKey.addEventListener("change", function () {
+        if (!rememberKey.checked) {
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch (_) {}
+        } else persistKey();
+      });
+      apiKeyInput.addEventListener("blur", persistKey);
+      modelNameInput.addEventListener("blur", persistModel);
+
+      async function openCamera() {
+        showError("");
+        if (stream) {
+          setPolite("相機已開啟。");
+          return;
+        }
+        const tryConstraints = [
+          { video: { facingMode: { ideal: "environment" } }, audio: false },
+          { video: { facingMode: "user" }, audio: false },
+          { video: true, audio: false },
+        ];
+        let err = null;
+        for (const c of tryConstraints) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(c);
+            err = null;
+            break;
+          } catch (e) {
+            err = e;
+          }
+        }
+        if (!stream) {
+          const msg = (err && err.message) || "無法開啟相機。請確認已授予權限，並以 HTTPS 或 localhost 開啟此頁。";
+          showError(msg);
+          return;
+        }
+        video.srcObject = stream;
+        videoPlaceholder.classList.add("hidden");
+        setPolite("相機已開啟。");
+      }
+
+      function closeCamera() {
+        if (stream) {
+          stream.getTracks().forEach(function (t) {
+            t.stop();
+          });
+          stream = null;
+        }
+        video.srcObject = null;
+        videoPlaceholder.classList.remove("hidden");
+        setPolite("相機已關閉。");
+      }
+
+      function captureFrame() {
+        showError("");
+        if (!stream || !video.videoWidth) {
+          showError("請先開啟相機並等待畫面就緒。");
+          return false;
+        }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        const prefix = "data:image/jpeg;base64,";
+        if (!dataUrl.startsWith(prefix)) {
+          showError("擷取影像失敗。");
+          return false;
+        }
+        lastImageBase64 = dataUrl.slice(prefix.length);
+        setPolite("已擷取畫面。");
+        return true;
+      }
+
+      const DEFAULT_PROMPT =
+        "你是協助視障使用者的視覺助理。請用繁體中文、條列與短句，描述影像中的主要內容、重要文字（逐字讀出）、顏色與相對位置，方便語音朗讀聽懂。若畫面模糊請說明。";
+
+      function getUserQuestion() {
+        const q = questionInput.value.trim();
+        return q || DEFAULT_PROMPT;
+      }
+
+      function extractTextFromGemini(data) {
+        const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+        if (!parts) return "";
+        return parts
+          .map(function (p) {
+            return typeof p.text === "string" ? p.text : "";
+          })
+          .join("")
+          .trim();
+      }
+
+      async function askGemini() {
+        showError("");
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) {
+          showError("請輸入 Gemini API 金鑰。");
+          apiKeyInput.focus();
+          return;
+        }
+        if (!lastImageBase64) {
+          showError("沒有可送出的影像，請再試一次擷取。");
+          return;
+        }
+        const model = (modelNameInput.value.trim() || "gemini-2.5-flash").replace(/^models\//, "");
+        const text = getUserQuestion();
+        setPolite("正在詢問模型，請稍候。");
+        replyEl.textContent = "";
+
+        const url =
+          "https://generativelanguage.googleapis.com/v1beta/models/" +
+          encodeURIComponent(model) +
+          ":generateContent?key=" +
+          encodeURIComponent(apiKey);
+
+        const body = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: text },
+                {
+                  inlineData: {
+                    mimeType: "image/jpeg",
+                    data: lastImageBase64,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+
+        const controller = new AbortController();
+        const tid = setTimeout(function () {
+          controller.abort();
+        }, 90000);
+
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+          clearTimeout(tid);
+          const data = await res.json().catch(function () {
+            return {};
+          });
+          if (!res.ok) {
+            const msg =
+              (data && data.error && data.error.message) ||
+              "API 錯誤，狀態碼 " + res.status;
+            showError(msg);
+            setPolite("辨識失敗。");
+            return;
+          }
+          const out = extractTextFromGemini(data);
+          if (!out) {
+            const block = data.promptFeedback && JSON.stringify(data.promptFeedback);
+            showError(block ? "未產生文字回覆。" + block : "未產生文字回覆。");
+            setPolite("沒有取得可朗讀的文字。");
+            return;
+          }
+          lastReplyText = out;
+          replyEl.textContent = out;
+          replyEl.focus();
+          setPolite("已取得回覆，可按朗讀。");
+          persistKey();
+          persistModel();
+        } catch (e) {
+          clearTimeout(tid);
+          if (e.name === "AbortError") {
+            showError("連線逾時，請檢查網路後再試。");
+          } else {
+            showError((e && e.message) || "網路錯誤。");
+          }
+          setPolite("辨識失敗。");
+        }
+      }
+
+      async function captureAndAsk() {
+        if (!captureFrame()) return;
+        setPolite("已擷取畫面，正在詢問模型。");
+        await askGemini();
+      }
+
+      function speakReply() {
+        showError("");
+        if (!lastReplyText) {
+          showError("尚無可朗讀的內容，請先按「擷取並辨識」。");
+          return;
+        }
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(lastReplyText);
+        u.lang = "zh-TW";
+        u.rate = 1;
+        u.pitch = 1;
+        window.speechSynthesis.speak(u);
+        setPolite("開始朗讀。");
+      }
+
+      function stopSpeak() {
+        window.speechSynthesis.cancel();
+        setPolite("已停止朗讀。");
+      }
+
+      document.getElementById("btnCamera").addEventListener("click", openCamera);
+      document.getElementById("btnStopCamera").addEventListener("click", closeCamera);
+      document.getElementById("btnCaptureAsk").addEventListener("click", function () {
+        captureAndAsk();
+      });
+      document.getElementById("btnSpeak").addEventListener("click", speakReply);
+      document.getElementById("btnStopSpeak").addEventListener("click", stopSpeak);
+
+      document.querySelectorAll("[data-mobile-mirror]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const id = btn.getAttribute("data-mobile-mirror");
+          const el = document.getElementById(id);
+          if (el) el.click();
+        });
+      });
+
+      window.addEventListener("beforeunload", function () {
+        closeCamera();
+        window.speechSynthesis.cancel();
+      });
+    })();
+  </script>
+</body>
+</html>
